@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <EditTextPreference
+        android:key="min_interval_ms"
+        android:title="Min. interval per frame (ms)"
+        android:defaultValue="200"
+        android:dialogTitle="Min. interval (milliseconden)"
+        android:inputType="number"
+        app:useSimpleSummaryProvider="true"
+        app:iconSpaceReserved="false" />
+
+    <EditTextPreference
+        android:key="heading_tolerance_pct"
+        android:title="Tolerance for heading (pct)"
+        android:defaultValue="10"
+        android:dialogTitle="Tolerance for heading (percent)"
+        android:inputType="number"
+        app:useSimpleSummaryProvider="true"
+        app:iconSpaceReserved="false" />
+
+
+    <ListPreference
+        android:key="model_select"
+        android:title="Model choice"
+        android:defaultValue="unrealsim.pt"
+        android:entries="@array/model_names"
+        android:entryValues="@array/model_files"
+        android:dialogTitle="Choose a model"
+        app:useSimpleSummaryProvider="true"
+        app:iconSpaceReserved="false" />
+
+</PreferenceScreen>

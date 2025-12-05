@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="model_names">
+        <item>Unreal Simulation</item>
+        <item>Canicross</item>
+        <item>Unreal Simulation via RPICAM</item>
+    </string-array>
+
+    <string-array name="model_files">
+        <item>unrealsim.pt</item>
+        <item>canicross.pt</item>
+        <item>RPIUnreal.pt</item>
+    </string-array>
+
+</resources>
