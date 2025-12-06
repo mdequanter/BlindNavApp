@@ -101,12 +101,21 @@ class MainActivity : ComponentActivity() {
                 uploader.updateModel(v)
                 baseInfoText = "Signaling WS: ws://94.111.36.87:9000\nLocal IP: ${getWifiIp() ?: "0.0.0.0"}\nminIntervalMs: $v ms"
                 updateInfoText()
+
+                if (v == "unrealsim.pt") {
+                    MediaPlayer.create(this, R.raw.unrealsim_model_selected).start()
+                }
+                if (v == "canicross.pt") {
+                    MediaPlayer.create(this, R.raw.canicross_model_selected).start()
+                }
+                if (v == "recordmode") {
+                    MediaPlayer.create(this, R.raw.recordmode).start()
+                }
             }
 
 
         }
     }
-
 
     private var nv21Buf: ByteArray? = null
 
@@ -254,6 +263,8 @@ class MainActivity : ComponentActivity() {
                 else -> false
             }
         }
+
+        MediaPlayer.create(this, R.raw.application_started).start()
 
 
 
