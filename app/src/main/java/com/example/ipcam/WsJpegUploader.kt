@@ -59,6 +59,16 @@ class WsJpegUploader(
         this.sendJson(json)
     }
 
+    fun sendStats(latency: String, latitude: String, longitude: String){
+        val json = """{
+                  "type":"stats",
+                  "latency":${latency},
+                  "longitude":${longitude},
+                  "latitude":${latitude},
+                }""".trimIndent()
+        this.sendJson(json)
+    }
+
     private fun ensureConnected() {
         if (connectingOrOpen.get()) return
         connectingOrOpen.set(true)
@@ -114,7 +124,7 @@ class WsJpegUploader(
      * Verzend een JPEG-frame. Stuurt eerst een klein JSON met frame_id & tijdstempel,
      * daarna de binaire JPEG. Roept onSent(sentAt, frameId) zodra het frame echt is verzonden.
      */
-    fun trySend(jpeg: ByteArray) {
+    fun trySend(jpeg: ByteArray, latency: String, longitude: String, latitude: String) {
         if (jpeg.isEmpty() || jpeg.size > maxFrameBytes) return
         latest.set(jpeg)
 
@@ -131,7 +141,7 @@ class WsJpegUploader(
                 val id = frameCounter.incrementAndGet()
 
                 // 1) meta JSON met frame_id uitsturen
-                val metaJson = """{"type":"frame_meta","frame_id":$id,"ts":${System.currentTimeMillis()},"selectedModel":"${selectedModel}"}"""
+                val metaJson = """{"type":"frame_meta","frame_id":$id,"ts":${System.currentTimeMillis()},"latency_ms":"${latency}","longitude":"${longitude}","latitude":"${latitude}","selectedModel":"${selectedModel}"}"""
                 socket.send(metaJson)
 
                 // 2) binaire JPEG uitsturen

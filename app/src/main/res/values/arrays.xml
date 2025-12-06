@@ -3,13 +3,13 @@
     <string-array name="model_names">
         <item>Unreal Simulation</item>
         <item>Canicross</item>
-        <item>Unreal Simulation via RPICAM</item>
+        <item>Record mode</item>
     </string-array>
 
     <string-array name="model_files">
         <item>unrealsim.pt</item>
         <item>canicross.pt</item>
-        <item>RPIUnreal.pt</item>
+        <item>recordmode</item>
     </string-array>
 
 </resources>

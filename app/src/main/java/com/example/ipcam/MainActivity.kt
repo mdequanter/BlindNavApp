@@ -44,6 +44,8 @@ class MainActivity : ComponentActivity() {
 
     private enum class Direction { LEFT, FORWARD, RIGHT }
 
+
+
     private lateinit var mpLeft: MediaPlayer
     private lateinit var mpRight: MediaPlayer
     private lateinit var mpForward: MediaPlayer
@@ -55,6 +57,9 @@ class MainActivity : ComponentActivity() {
     @Volatile private var lastHeadingVal: Double? = null
     @Volatile private var lastLatencyMs: Long? = null
     @Volatile private var lastLocLine: String = ""
+
+    @Volatile private var Longitude: Double = 0.00
+    @Volatile private var Latitude: Double = 0.00
 
     @Volatile private var lastSentFrameId: Long? = null
 
@@ -185,8 +190,6 @@ class MainActivity : ComponentActivity() {
         }
 
 
-
-
         // === Uploader met frameId-latency ===
         uploader = WsJpegUploader(
             url = "ws://94.111.36.87:9000",
@@ -211,6 +214,8 @@ class MainActivity : ComponentActivity() {
                     arrowOverlay.setHeading(heading)
                     val dir = headingToDirection(heading)
                     speakDirectionIfChanged(dir)
+
+
 
                     updateInfoText()
                 }
@@ -291,7 +296,13 @@ class MainActivity : ComponentActivity() {
                     val jpeg = baos.toByteArray()
                     latestJpeg.set(jpeg)
 
-                    uploader.trySend(jpeg)  // binary JPEG over WS (stuurt ook frame_meta + frameId)
+                    val latency = lastLatencyMs.toString()
+                    val longitude = Longitude.toString()
+                    val latitude = Latitude.toString()
+
+                    uploader.trySend(jpeg, latency, longitude, latitude)  // binary JPEG over WS (stuurt ook frame_meta + frameId)
+
+
                 } catch (_: Exception) {
                 } finally {
                     imageProxy.close()
@@ -328,6 +339,9 @@ class MainActivity : ComponentActivity() {
 
                 uploader.sendJson(json)
 
+                Latitude = loc.latitude
+                Longitude = loc.longitude
+
                 lastLocLine = "Loc: ${"%.5f".format(loc.latitude)}, ${"%.5f".format(loc.longitude)} (±${loc.accuracy.toInt()}m)"
                 updateInfoText()
             }
@@ -340,7 +354,6 @@ class MainActivity : ComponentActivity() {
         val headingStr = lastHeadingVal?.let { "%.1f°".format(it) } ?: "—"
         val latencyStr = lastLatencyMs?.let { "$it ms" } ?: "—"
         val frameIdStr = lastSentFrameId?.toString() ?: "—"
-
         info.text = buildString {
             append(baseInfoText)
             append("\nHeading: "); append(headingStr)
@@ -350,8 +363,9 @@ class MainActivity : ComponentActivity() {
                 append("\n"); append(lastLocLine)
             }
             append("\nTol: ±${"%.1f".format(90.0 * headingTolerancePct / 100.0)}° (${headingTolerancePct}%)")
-
         }
+
+
     }
 
     private fun headingToDirection(heading: Double): Direction {
