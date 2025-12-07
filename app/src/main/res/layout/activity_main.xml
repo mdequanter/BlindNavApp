@@ -30,7 +30,7 @@
         android:layout_height="wrap_content"
         android:text="Server starting..."
         android:padding="12dp"
-        android:textSize="14sp"
+        android:textSize="20sp"
         android:textColor="#FFFFFFFF"
         android:background="#44000000"
         app:layout_constraintTop_toTopOf="parent"

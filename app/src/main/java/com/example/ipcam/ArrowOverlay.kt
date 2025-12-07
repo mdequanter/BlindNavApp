@@ -12,13 +12,14 @@ class ArrowOverlay @JvmOverloads constructor(
 
     private val linePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.RED
-        strokeWidth = 10f
+        strokeWidth = 20f
         style = Paint.Style.STROKE
         strokeCap = Paint.Cap.ROUND
     }
     private val headPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.RED
         style = Paint.Style.FILL
+
     }
 
     @Volatile private var headingDeg: Float = 90f // 0°=rechts, 90°=omhoog (jouw conventie)
@@ -39,7 +40,8 @@ class ArrowOverlay @JvmOverloads constructor(
         val startY = h * 0.95f  // <-- correct (geen deling!)
 
         // Pijllengte
-        val L = min(w, h) * 0.35f
+        val extra = linePaint.strokeWidth / 2f
+        val L = (min(w, h) * 0.35f) + extra
 
         // Jouw heading: 0°=rechts, 90°=omhoog; Y naar beneden -> dy negatief bij omhoog
         val rad = Math.toRadians(headingDeg.toDouble())

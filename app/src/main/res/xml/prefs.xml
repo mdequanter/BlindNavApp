@@ -21,6 +21,15 @@
         app:useSimpleSummaryProvider="true"
         app:iconSpaceReserved="false" />
 
+    <EditTextPreference
+        android:key="model_confidence_pct"
+        android:title="Model confidence (pct)"
+        android:defaultValue="30"
+        android:dialogTitle="Model confidence (percent)"
+        android:inputType="number"
+        app:useSimpleSummaryProvider="true"
+        app:iconSpaceReserved="false" />
+
 
     <ListPreference
         android:key="model_select"

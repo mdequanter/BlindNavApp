@@ -29,6 +29,10 @@ import com.google.android.gms.location.LocationResult
 import android.media.MediaPlayer
 import androidx.preference.PreferenceManager
 
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
+import android.content.Context
+
 class MainActivity : ComponentActivity() {
     private lateinit var uploader: WsJpegUploader
     private lateinit var previewView: PreviewView
@@ -64,6 +68,10 @@ class MainActivity : ComponentActivity() {
     @Volatile private var lastSentFrameId: Long? = null
 
     @Volatile private var headingTolerancePct: Int = 10
+    @Volatile private var modelConfidencePct: Int = 30
+
+    @Volatile private var selectedModel: String = "unrealsim.pt"
+    @Volatile private var recordingMode: String = ""
 
 
     private val permissionLauncher = registerForActivityResult(
@@ -85,35 +93,61 @@ class MainActivity : ComponentActivity() {
             "min_interval_ms" -> {
                 val v = sp.getString(key, "200")?.toLongOrNull() ?: 200L
                 uploader.updateMinIntervalMs(v)
-                baseInfoText = "Signaling WS: ws://94.111.36.87:9000\nLocal IP: ${getWifiIp() ?: "0.0.0.0"}\nminIntervalMs: $v ms"
+                baseInfoText = "Inference server: ws://94.111.36.87:9000\nLocal IP: ${getWifiIp() ?: "0.0.0.0"}\nminIntervalMs: $v ms"
                 updateInfoText()
             }
 
-            // ✅ Correcte key + variabele updaten
             "heading_tolerance_pct" -> {
                 val v = sp.getString(key, "10")?.toIntOrNull()?.coerceIn(0, 40) ?: 10
                 headingTolerancePct = v
                 updateInfoText()
             }
 
+            "model_confidence_pct" -> {
+                val v = sp.getString(key, "10")?.toIntOrNull()?.coerceIn(0, 100) ?: 10
+                modelConfidencePct = v
+                val value = v.toString()
+                uploader.updateModelConfidence(value)
+                updateInfoText()
+            }
+
+
             "model_select" -> {
                 val v = sp.getString(key, "unrealsim.pt") ?: "unrealsim.pt"
                 uploader.updateModel(v)
-                baseInfoText = "Signaling WS: ws://94.111.36.87:9000\nLocal IP: ${getWifiIp() ?: "0.0.0.0"}\nminIntervalMs: $v ms"
+                //baseInfoText = "Signaling WS: ws://94.111.36.87:9000\nLocal IP: ${getWifiIp() ?: "0.0.0.0"}\nminIntervalMs: $v ms"
                 updateInfoText()
 
                 if (v == "unrealsim.pt") {
+                    recordingMode = ""
+                    selectedModel = v
                     MediaPlayer.create(this, R.raw.unrealsim_model_selected).start()
                 }
                 if (v == "canicross.pt") {
+                    recordingMode = ""
+                    selectedModel = v
                     MediaPlayer.create(this, R.raw.canicross_model_selected).start()
                 }
                 if (v == "recordmode") {
+                    recordingMode = "recording"
                     MediaPlayer.create(this, R.raw.recordmode).start()
                 }
             }
 
 
+        }
+    }
+
+
+    private fun getConnectionType(): String {
+        val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val network = cm.activeNetwork ?: return "Offline"
+        val caps = cm.getNetworkCapabilities(network) ?: return "Offline"
+
+        return when {
+            caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> "WiFi"
+            caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> "Cellular"
+            else -> "Other"
         }
     }
 
@@ -178,10 +212,13 @@ class MainActivity : ComponentActivity() {
 
         val initialTol = prefs.getString("heading_tolerance_pct", "10")?.toIntOrNull() ?: 10
         headingTolerancePct = initialTol
+        val initialModelConf = prefs.getString("model_confidence_pct", "30")?.toIntOrNull() ?: 10
+        modelConfidencePct = initialModelConf
+
 
 
         val ip = getWifiIp() ?: "0.0.0.0"
-        baseInfoText = "Signaling WS: ws://94.111.36.87:9000\nLocal IP: $ip"
+        baseInfoText = "Inference server: ws://94.111.36.87:9000\nLocal IP: $ip"
         info.text = baseInfoText
 
         val initialMin = prefs.getString("min_interval_ms", "200")?.toLongOrNull() ?: 200L
@@ -190,14 +227,13 @@ class MainActivity : ComponentActivity() {
 
         previewView.setOnClickListener {
             if (info.alpha == 0f) {
+                // Toon en blijf staan
                 info.animate().alpha(1f).setDuration(300).start()
-                // Automatisch weer verbergen na 5 seconden
-                info.postDelayed({ info.animate().alpha(0f).setDuration(300).start() }, 5000)
             } else {
+                // Verberg pas als je opnieuw tapt
                 info.animate().alpha(0f).setDuration(300).start()
             }
         }
-
 
         // === Uploader met frameId-latency ===
         uploader = WsJpegUploader(
@@ -310,8 +346,9 @@ class MainActivity : ComponentActivity() {
                     val latency = lastLatencyMs.toString()
                     val longitude = Longitude.toString()
                     val latitude = Latitude.toString()
+                    val connectionType = getConnectionType()
 
-                    uploader.trySend(jpeg, latency, longitude, latitude)  // binary JPEG over WS (stuurt ook frame_meta + frameId)
+                    uploader.trySend(jpeg, connectionType,latency, longitude, latitude)  // binary JPEG over WS (stuurt ook frame_meta + frameId)
 
 
                 } catch (_: Exception) {
@@ -365,6 +402,9 @@ class MainActivity : ComponentActivity() {
         val headingStr = lastHeadingVal?.let { "%.1f°".format(it) } ?: "—"
         val latencyStr = lastLatencyMs?.let { "$it ms" } ?: "—"
         val frameIdStr = lastSentFrameId?.toString() ?: "—"
+        val selectedModel = selectedModel
+        val connType = getConnectionType()
+
         info.text = buildString {
             append(baseInfoText)
             append("\nHeading: "); append(headingStr)
@@ -373,7 +413,13 @@ class MainActivity : ComponentActivity() {
             if (lastLocLine.isNotEmpty()) {
                 append("\n"); append(lastLocLine)
             }
+            append("\nConnection: "); append(connType)
             append("\nTol: ±${"%.1f".format(90.0 * headingTolerancePct / 100.0)}° (${headingTolerancePct}%)")
+            append("\nSelected Model: "); append(selectedModel)
+            if (recordingMode == "recording") {
+                append(" (RECORDING!)")
+            }
+            append("\nModel Confidence: ${modelConfidencePct}%")
         }
 
 
