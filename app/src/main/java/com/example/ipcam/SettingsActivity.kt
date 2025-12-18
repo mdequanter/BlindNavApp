@@ -14,6 +14,8 @@ class SettingsActivity : AppCompatActivity() {
             .replace(android.R.id.content, SettingsFragment())
             .commit()
     }
+
+
 }
 
 class SettingsFragment : PreferenceFragmentCompat() {

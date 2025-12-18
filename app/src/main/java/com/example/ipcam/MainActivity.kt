@@ -32,6 +32,10 @@ import androidx.preference.PreferenceManager
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.content.Context
+import android.view.WindowManager
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 
 class MainActivity : ComponentActivity() {
     private lateinit var uploader: WsJpegUploader
@@ -61,6 +65,9 @@ class MainActivity : ComponentActivity() {
     @Volatile private var lastHeadingVal: Double? = null
     @Volatile private var lastLatencyMs: Long? = null
     @Volatile private var lastLocLine: String = ""
+
+    @Volatile private var signalingServer: String = "ws://94.111.36.87:9000"
+    //@Volatile private var signalingServer: String = "ws://192.168.0.81:9000"
 
     @Volatile private var Longitude: Double = 0.00
     @Volatile private var Latitude: Double = 0.00
@@ -93,7 +100,7 @@ class MainActivity : ComponentActivity() {
             "min_interval_ms" -> {
                 val v = sp.getString(key, "200")?.toLongOrNull() ?: 200L
                 uploader.updateMinIntervalMs(v)
-                baseInfoText = "Inference server: ws://94.111.36.87:9000\nLocal IP: ${getWifiIp() ?: "0.0.0.0"}\nminIntervalMs: $v ms"
+                baseInfoText = "Inference server: ${signalingServer}\nLocal IP: ${getWifiIp() ?: "0.0.0.0"}\nminIntervalMs: $v ms"
                 updateInfoText()
             }
 
@@ -195,18 +202,23 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        window.decorView.systemUiVisibility =
-            (android.view.View.SYSTEM_UI_FLAG_FULLSCREEN
-                    or android.view.View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                    or android.view.View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY)
-
-
         setContentView(R.layout.activity_main)
-        window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+
+        // Edge-to-edge + immersive (modern)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+
+ n
+        val controller = WindowInsetsControllerCompat(window, window.decorView)
+        controller.hide(WindowInsetsCompat.Type.systemBars())
+        controller.systemBarsBehavior =
+            WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
         previewView = findViewById(R.id.previewView)
         info = findViewById(R.id.info)
         arrowOverlay = findViewById(R.id.arrowOverlay)
+
         val prefs = PreferenceManager.getDefaultSharedPreferences(this)
         prefs.registerOnSharedPreferenceChangeListener(prefListener)
 
@@ -218,7 +230,7 @@ class MainActivity : ComponentActivity() {
 
 
         val ip = getWifiIp() ?: "0.0.0.0"
-        baseInfoText = "Inference server: ws://94.111.36.87:9000\nLocal IP: $ip"
+        baseInfoText = "Inference server: ${signalingServer}\nLocal IP: $ip"
         info.text = baseInfoText
 
         val initialMin = prefs.getString("min_interval_ms", "200")?.toLongOrNull() ?: 200L
@@ -236,8 +248,10 @@ class MainActivity : ComponentActivity() {
         }
 
         // === Uploader met frameId-latency ===
+
+
         uploader = WsJpegUploader(
-            url = "ws://94.111.36.87:9000",
+            url = signalingServer,
             minIntervalMs = initialMin,
             onHeading = { heading, frameId ->
                 runOnUiThread {
