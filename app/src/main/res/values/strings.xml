@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">AndroidIPCam</string>
+    <string name="pref_title_signaling_server">Server URL</string>
+    <string name="pref_summary_signaling_server">Enter the WebSocket URL of the signaling server
+    </string>
+    <string name="pref_default_signaling_server">ws://192.168.0.81:9000</string>
+    <string name="pref_dialog_title_signaling_server">Signaling Server URL</string>
 </resources>

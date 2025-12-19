@@ -2,7 +2,9 @@
 <PreferenceScreen
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
-
+    <PreferenceCategory
+        android:title="Settings"
+        app:iconSpaceReserved="false" />
     <EditTextPreference
         android:key="min_interval_ms"
         android:title="Min. interval per frame (ms)"
